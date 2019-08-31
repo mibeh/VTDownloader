@@ -8,7 +8,7 @@ VTDownloader works by fist searching based on the query provided to retrieve the
 
 ```
 $ git clone <clone url>
-$ cd vtdownloader
+$ cd VTDownloader
 $ pip3 install -r requirements.txt
 ```
 
@@ -36,5 +36,5 @@ optional arguments:
 ```
 To extract the downloaded files, 7zip can be used. The default password is 'infected':
 ```
-$ 7z e downloads/YYYY-MM-DDTHH:mm:SS
+$ 7z e downloads/YYYY-MM-DDTHH:mm:SS.zip
 ```
