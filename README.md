@@ -1,8 +1,10 @@
 # VTDownloader
 
-This tool can be used to download files from VirusTotal using their [v3 API](https://developers.virustotal.com/v3.0/reference). It is written in Python 3 in increase maintainability. This project was inspired by the [VirusTotal Intelligence downloader.](https://www.virustotal.com/intelligence/downloader/) 
+This tool can be used to download files from VirusTotal using their [v3 API](https://developers.virustotal.com/v3.0/reference). It is written in Python 3 for maintainability. This project was inspired by the [VirusTotal Intelligence downloader.](https://www.virustotal.com/intelligence/downloader/) 
 
 VTDownloader works by fist searching based on the query provided to retrieve the hashes for the matching files, up to `n` results. The files corresponding to those hashes will then be downloaded in a password protected Zip archive. Alternatively, if a file of hashes is specified, those files will be downloaded in the same fashion without performing a search, provided those files exist on VirusTotal.
+
+An API key is needed for this to work. It does not need to be a premium API key nor does it need 'private' API access.
 
 ## Installation:
 
@@ -10,6 +12,7 @@ VTDownloader works by fist searching based on the query provided to retrieve the
 $ git clone <clone url>
 $ cd VTDownloader
 $ pip3 install -r requirements.txt
+$ export VT_API_KEY='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 ```
 
 ## Usage:
