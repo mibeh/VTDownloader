@@ -93,7 +93,7 @@ def download_files(hash_list):
 		logging.info('[-] Zip file not yet ready to download...Attempting again in 5 sec.')
 		time.sleep(5)
 
-	dl_filename = os.path.join('downloads','{}.zip'.format(datetime.datetime.now()))
+	dl_filename = os.path.join('downloads','{}.zip'.format(time.strftime('%Y-%m-%dT%H:%M:%S')))
 	logging.info('[+] Now downloading file {}. Password will be \'infected\'.'.format(dl_filename))
 	response = s.get(url=download_url, headers=headers)
 	responseJSON = json.loads(response.content)
@@ -139,16 +139,14 @@ def main():
 	requests.packages.urllib3.disable_warnings()
 
 	if hashfile:
-		try:
-			if os.path.exists(hashfile):
-				with open(hashfile, 'rt') as inputfile:
-					logging.info('[*] Now reading hashes to download from file.')
-					hashes = re.findall('([0-9a-fA-F]{64}|[0-9a-fA-F]{40}|[0-9a-fA-F]{32})', inputfile.read())
-					hash_list = list(hashes)
-		except:
+		if os.path.exists(hashfile):
+			with open(hashfile, 'rt') as inputfile:
+				logging.info('[*] Now reading hashes to download from file.')
+				hashes = re.findall('([0-9a-fA-F]{64}|[0-9a-fA-F]{40}|[0-9a-fA-F]{32})', inputfile.read())
+				hash_list = list(hashes)
+				download_files(hash_list)
+		else:
 			logging.info("[-] Error: {} not found".format(hashfile))
-
-		download_files(hash_list)
 
 	if query:
 		logging.info('[*] Now getting results for the query \'{}\'.'.format(query))
