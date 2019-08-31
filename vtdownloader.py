@@ -1,8 +1,24 @@
 #! /usr/bin/env/python3
-# License:
-# Title: VTDownloader.py
+# 
+# Title: vtdownloader.py
 #
 # This tool can be used to download files from VirusTotal using the v3 API
+# given either a search query or a file with a list of hashes.
+#
+# Copyright (C) 2019 Michael Ibeh
+'''
+	This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation version 3 of the License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+'''
 
 import os, sys, re, time, json, datetime
 import requests
@@ -19,7 +35,7 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout,
 					format='%(asctime)s - %(levelname)s: %(message)s', 
 					datefmt='%m/%d/%Y %I:%M:%S')
 
-# Retrieve hashes for files from search query
+# Retrieve only the SHA-256 of the matching files
 def get_results(search, numfiles):
 
 	url = 'https://www.virustotal.com/api/v3/intelligence/search?'
@@ -82,7 +98,7 @@ def download_files(hash_list):
 	response = s.get(url=download_url, headers=headers)
 	responseJSON = json.loads(response.content)
 	s.close()
-	# Conatains actual download url
+	# Returns a signed URL from where you can download the specified ZIP file. The URL expires after 1 hour.
 	zip_url = responseJSON['data']
 	response = s.get(url=zip_url, headers=headers)
 
@@ -105,8 +121,8 @@ def main():
 
 	parser = argparse.ArgumentParser(description='Downloads files from VirustTotal. Specify the type of files desired using the standard VirustTotal query syntax.',
 		formatter_class=argparse.RawDescriptionHelpFormatter)
-	parser.add_argument('-f', '--hashfile', dest='hashfile', help='A file of hashes to download.', required=False)
-	parser.add_argument('-n', '--number', help='The number of files to downlaod that match the search query', 
+	parser.add_argument('-f', '--hashfile', dest='hashfile', help='A file of hashes to download. Can be any combination of SHA-256, SHA-1, or MD5.', required=False)
+	parser.add_argument('-n', '--number', help='The number of files to downlaod that match the search query. Default is 50', 
 		dest='numfiles', default=50)
 	parser.add_argument('-q', '--query', help='', dest='query', action='store', nargs='+', required=False)
 	parser.add_argument('-v', '--version', action='version',version='%(prog)s {version}'.format(version=__version__))
