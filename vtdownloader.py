@@ -20,14 +20,14 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-import os, sys, re, time, json, datetime
+import os, sys, re, time, json
 import requests
 import argparse
 import logging
 import urllib.parse
 
 __author__= 'Michael Ibeh'
-__version__= '0.1'
+__version__= '0.2'
 
 VT_API_KEY = os.environ['VT_API_KEY']
 
@@ -48,12 +48,16 @@ def get_results(search, numfiles):
 	response = s.get(url, headers=headers)
 	responseJSON = json.loads(response.text)
 
-	logging.info('[*] Gathering hashes of files returned from search.')
-	hashes = []
-	for file in responseJSON['data']:
-		hashes.append(file['id'])
-	
-	download_files(hashes)
+	if 'error' in responseJSON:
+		logging.info("[-] Error:{} Message: {}".format(responseJSON['error']['code'], responseJSON['error']['message']))
+		return
+	else:
+		logging.info('[*] Gathering hashes of files returned from search.')
+		hashes = []
+		for file in responseJSON['data']:
+			hashes.append(file['id'])
+		
+		download_files(hashes)
 
 	return 
 
@@ -73,47 +77,58 @@ def download_files(hash_list):
 	responseJSON = json.loads(response.text)
 	s.close()
 
-	download_id = responseJSON['data']['id']
-	id_url = 'https://www.virustotal.com/api/v3/intelligence/zip_files/'+download_id
-	download_url = 'https://www.virustotal.com/api/v3/intelligence/zip_files/'+download_id+'/download_url'
-	
-	# Short pause to allow download to be ready
-	time.sleep(2)
+	if 'error' in responseJSON:
+		logging.info("[-] Error: {} Message: {}".format(responseJSON['error']['code'], responseJSON['error']['message']))
+		return
+	else:
+		download_id = responseJSON['data']['id']
+		id_url = 'https://www.virustotal.com/api/v3/intelligence/zip_files/'+download_id
+		download_url = 'https://www.virustotal.com/api/v3/intelligence/zip_files/'+download_id+'/download_url'
+		
+		# Short pause to allow download to be ready
+		time.sleep(2)
 
-	while True:
-		s = requests.Session()
-		response = s.get(url=id_url, headers=headers)
-		responseJSON = json.loads(response.text)
+		while True:
+			s = requests.Session()
+			response = s.get(url=id_url, headers=headers)
+			responseJSON = json.loads(response.text)
+			s.close()
+
+			if 'error' in responseJSON:
+				logging.info("[-] Error: {} Message: {}".format(responseJSON['error']['code'], responseJSON['error']['message']))
+				return
+			else:
+				status = responseJSON['data']['attributes']['status']
+				if status == 'finished':
+					break
+
+				logging.info('[-] Zip file not yet ready to download...Attempting again in 5 sec.')
+				time.sleep(5)
+
+		dl_filename = os.path.join('downloads','{}.zip'.format(time.strftime('%Y-%m-%dT%H:%M:%S')))
+		logging.info('[+] Now downloading file {}. Password will be \'infected\'.'.format(dl_filename))
+		response = s.get(url=download_url, headers=headers)
+		responseJSON = json.loads(response.content)
 		s.close()
+		# Returns a signed URL from where you can download the specified ZIP file. The URL expires after 1 hour.
+		zip_url = responseJSON['data']
+		response = s.get(url=zip_url, headers=headers)
 
-		status = responseJSON['data']['attributes']['status']
-		if status == 'finished':
-			break
+		if response.status_code == 200:
+			# Make subdirectory if needed
+			try:
+				os.mkdir('downloads')
+			except:
+				pass
 
-		logging.info('[-] Zip file not yet ready to download...Attempting again in 5 sec.')
-		time.sleep(5)
-
-	dl_filename = os.path.join('downloads','{}.zip'.format(time.strftime('%Y-%m-%dT%H:%M:%S')))
-	logging.info('[+] Now downloading file {}. Password will be \'infected\'.'.format(dl_filename))
-	response = s.get(url=download_url, headers=headers)
-	responseJSON = json.loads(response.content)
-	s.close()
-	# Returns a signed URL from where you can download the specified ZIP file. The URL expires after 1 hour.
-	zip_url = responseJSON['data']
-	response = s.get(url=zip_url, headers=headers)
-
-	if response.status_code == 200:
-		# Make subdirectory if needed
-		try:
-			os.mkdir('downloads')
-		except:
-			pass
-
-		download_zip = open(dl_filename, 'wb')
-		download_zip.write(bytes(response.content))
-		download_zip.close()
-	
-	s.close()
+			download_zip = open(dl_filename, 'wb')
+			download_zip.write(bytes(response.content))
+			download_zip.close()
+		elif 'error' in responseJSON:
+			logging.info("[-] Error: {} Message: {}".format(responseJSON['error']['code'], responseJSON['error']['message']))
+			return
+		
+		s.close()
 	
 	return
 
