@@ -25,11 +25,17 @@ import requests
 import argparse
 import logging
 import urllib.parse
+from tabulate import tabulate
+from datetime import datetime
 
 __author__= 'Michael Ibeh'
-__version__= '0.2'
+__version__= '0.3'
 
-VT_API_KEY = os.environ['VT_API_KEY']
+try:
+	VT_API_KEY = os.environ['VT_API_KEY']
+except:
+	print("VirustTotal API Key not found.")
+	exit(1)
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, 
 					format='%(asctime)s - %(levelname)s: %(message)s', 
@@ -37,6 +43,8 @@ logging.basicConfig(level=logging.INFO, stream=sys.stdout,
 
 # Retrieve only the SHA-256 of the matching files
 def get_results(search, numfiles):
+
+	table = []
 
 	url = 'https://www.virustotal.com/api/v3/intelligence/search?'
 	headers = {'X-apikey':VT_API_KEY}
@@ -46,8 +54,9 @@ def get_results(search, numfiles):
 	logging.info('[*] Sending search request to VirusTotal.')
 	s = requests.Session()
 	response = s.get(url, headers=headers)
-	responseJSON = json.loads(response.text)
 
+	responseJSON = json.loads(response.text)
+	
 	if 'error' in responseJSON:
 		logging.info("[-] Error:{} Message: {}".format(responseJSON['error']['code'], responseJSON['error']['message']))
 		return
@@ -56,13 +65,14 @@ def get_results(search, numfiles):
 		hashes = []
 		for file in responseJSON['data']:
 			hashes.append(file['id'])
+			table.append(get_metadata(file['id']))
 		
-		download_files(hashes)
+		download_files(hashes, table)
 
 	return 
 
 # Download files based on the hashes provided, downloaded files will be in a password protected Zip
-def download_files(hash_list):
+def download_files(hash_list, table):
 
 	logging.info('[*] Requesting download url for Zip of files from hashes.')
 
@@ -110,6 +120,7 @@ def download_files(hash_list):
 		response = s.get(url=download_url, headers=headers)
 		responseJSON = json.loads(response.content)
 		s.close()
+		
 		# Returns a signed URL from where you can download the specified ZIP file. The URL expires after 1 hour.
 		zip_url = responseJSON['data']
 		response = s.get(url=zip_url, headers=headers)
@@ -121,6 +132,7 @@ def download_files(hash_list):
 			except:
 				pass
 
+			# Write zip file to disk
 			download_zip = open(dl_filename, 'wb')
 			download_zip.write(bytes(response.content))
 			download_zip.close()
@@ -130,6 +142,34 @@ def download_files(hash_list):
 		
 		s.close()
 	
+	print_downloads(table)
+
+	return
+
+def get_metadata(file_id):
+
+	metadata = []
+
+	url = 'https://www.virustotal.com/api/v3/files/'
+	headers = {'X-apikey':VT_API_KEY}
+	
+	s = requests.Session()
+	response = s.get(url=url+file_id, headers=headers)
+	responseJSON = json.loads(response.text)
+
+	# Retrieve desired fields
+	metadata.append(responseJSON['data']['attributes']['sha256'])
+	metadata.append(responseJSON['data']['attributes']['meaningful_name'])
+	metadata.append(str(responseJSON['data']['attributes']['size']) + ' bytes')
+	metadata.append(datetime.utcfromtimestamp(responseJSON['data']['attributes']['last_submission_date']).strftime('%Y-%m-%dT%H:%M:%SZ'))
+
+	return metadata
+
+# Wrapper for tabulate
+def print_downloads(table):
+	headers = ["SHA-256", "Filename", "Size", "Latest Submission"]
+	print('\nFiles downloaded:\n')
+	print(tabulate(table, headers, showindex=True, tablefmt="grid"))
 	return
 
 def main():
