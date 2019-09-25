@@ -156,7 +156,8 @@ def get_metadata(file_id):
 	s = requests.Session()
 	response = s.get(url=url+file_id, headers=headers)
 	responseJSON = json.loads(response.text)
-
+	s.close()
+	
 	# Retrieve desired fields
 	metadata.append(responseJSON['data']['attributes']['sha256'])
 	metadata.append(responseJSON['data']['attributes']['meaningful_name'])
