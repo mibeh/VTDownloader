@@ -46,7 +46,8 @@ $ python3 vtdownloader.py -q submitter:BR submitter:web fs:2019-08-25+ fs:2019-0
 09/24/2019 11:08:05 - INFO: [*] Gathering hashes of files returned from search.
 09/24/2019 11:08:11 - INFO: [*] Requesting download url for Zip of files from hashes.
 09/24/2019 11:08:11 - INFO: [*] Requesting download url for files from VirusTotal.
-09/24/2019 11:08:15 - INFO: [-] Zip file not yet ready to download...Attempting again in 5 sec.09/24/2019 11:08:20 - INFO: [+] Now downloading file downloads/2019-09-24T23:08:20.zip. Password will be 'infected'.
+09/24/2019 11:08:15 - INFO: [-] Zip file not yet ready to download...Attempting again in 5 sec.
+09/24/2019 11:08:20 - INFO: [+] Now downloading file downloads/2019-09-24T23:08:20.zip. Password will be 'infected'.
 
 Files downloaded:
 
